@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Play, Pause, Compass, ArrowRight, Eye, ShieldCheck, Sparkles } from 'lucide-react';
+import { Play, Pause, ArrowRight } from 'lucide-react';
 
 interface ScrollytellingProps {
   onExploreProperties: () => void;
@@ -50,7 +50,7 @@ const STORY_PHASES = [
 ];
 
 export const Scrollytelling: React.FC<ScrollytellingProps> = ({
-  onExploreProperties,
+  onExploreProperties: _onExploreProperties,
   onOpenValuation,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +62,12 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
+  // Synchronization refs to prevent seek-abort loops and decoder blackouts
+  const isSeekingRef = useRef<boolean>(false);
+  const pendingSeekTimeRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const targetTimeRef = useRef<number>(0);
+
   // Check reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -71,39 +77,102 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Handle scroll scrubbing
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current || isManualPlaying || prefersReducedMotion) return;
+  // Check if video is already ready from cache
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.readyState >= 1) {
+      setIsVideoReady(true);
+    }
+  }, []);
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const containerHeight = containerRef.current.offsetHeight - window.innerHeight;
-    if (containerHeight <= 0) return;
+  // Safe video seeking pipeline
+  const performSeek = useCallback((targetTime: number) => {
+    const video = videoRef.current;
+    if (!video || !video.duration || Number.isNaN(video.duration)) return;
 
-    const scrolled = -rect.top;
-    const progress = Math.min(Math.max(scrolled / containerHeight, 0), 1);
-    setScrollProgress(progress);
+    const clamped = Math.max(0, Math.min(targetTime, video.duration - 0.05));
 
-    // Update active storytelling phase
-    const phaseIdx = STORY_PHASES.findIndex(
-      (p) => progress >= p.range[0] && progress <= p.range[1]
-    );
-    if (phaseIdx !== -1) {
-      setCurrentPhaseIndex(phaseIdx);
+    // If already in an active seek, queue the latest target time
+    if (isSeekingRef.current) {
+      pendingSeekTimeRef.current = clamped;
+      return;
     }
 
-    // Scrub video playback position smoothly
-    if (videoRef.current && isVideoReady && videoRef.current.duration) {
-      const targetTime = progress * videoRef.current.duration;
-      // Seek if difference is noticeable to prevent excessive buffer thrashing
-      if (Math.abs(videoRef.current.currentTime - targetTime) > 0.08) {
-        videoRef.current.currentTime = targetTime;
+    // Ignore micro-seeks to avoid unnecessary decoder work
+    if (Math.abs(video.currentTime - clamped) < 0.06) {
+      return;
+    }
+
+    isSeekingRef.current = true;
+    try {
+      if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
+        (video as any).fastSeek(clamped);
+      } else {
+        video.currentTime = clamped;
       }
+    } catch {
+      isSeekingRef.current = false;
     }
-  }, [isManualPlaying, isVideoReady, prefersReducedMotion]);
+  }, []);
+
+  // Handle seeked event: release lock and execute queued seek if target changed
+  const handleSeeked = useCallback(() => {
+    isSeekingRef.current = false;
+    if (pendingSeekTimeRef.current !== null) {
+      const nextTime = pendingSeekTimeRef.current;
+      pendingSeekTimeRef.current = null;
+      performSeek(nextTime);
+    }
+  }, [performSeek]);
+
+  // RAF-throttled scroll handler
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const containerHeight = containerRef.current.offsetHeight - window.innerHeight;
+      if (containerHeight <= 0) return;
+
+      const scrolled = -rect.top;
+      const progress = Math.min(Math.max(scrolled / containerHeight, 0), 1);
+      setScrollProgress(progress);
+
+      // Update active storytelling phase
+      const phaseIdx = STORY_PHASES.findIndex(
+        (p) => progress >= p.range[0] && progress <= p.range[1]
+      );
+      if (phaseIdx !== -1) {
+        setCurrentPhaseIndex(phaseIdx);
+      }
+
+      // Scrub video when not in manual playback and not prefers-reduced-motion
+      if (!isManualPlaying && !prefersReducedMotion && videoRef.current && videoRef.current.duration) {
+        const targetTime = progress * videoRef.current.duration;
+        targetTimeRef.current = targetTime;
+        performSeek(targetTime);
+      }
+    });
+  }, [isManualPlaying, prefersReducedMotion, performSeek]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll, { passive: true });
+    // Trigger initial calculation
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
   }, [handleScroll]);
 
   // Video loaded metadata handler
@@ -125,7 +194,7 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
     }
   };
 
-  const activePhase = STORY_PHASES[currentPhaseIndex];
+  const activePhase = STORY_PHASES[currentPhaseIndex] || STORY_PHASES[0];
 
   return (
     <section
@@ -136,16 +205,30 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
       {/* Sticky Cinematic Viewport */}
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
         {/* 
+          FALLBACK LUXURY ARCHITECTURAL POSTER
+          Always renders behind the video to ensure zero black screens before, during, or after video decode
+        */}
+        <img
+          src="/assets/images/hmx_luxury_villa.jpg"
+          alt="Monolithic Architectural Villa"
+          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+        />
+
+        {/* 
           SUPPLIED SCROLL-ANIMATION VIDEO ASSET
           Streamed directly from original 'scroll down\Real Estate - FPV Drone...' via /videos/scroll
         */}
         <video
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover z-0"
+          className="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500"
+          style={{ opacity: isVideoReady ? 1 : 0.8 }}
           muted
           playsInline
           preload="auto"
+          poster="/assets/images/hmx_luxury_villa.jpg"
           onLoadedMetadata={handleLoadedMetadata}
+          onCanPlay={() => setIsVideoReady(true)}
+          onSeeked={handleSeeked}
           onTimeUpdate={() => {
             if (isManualPlaying && videoRef.current && videoRef.current.duration) {
               const prog = videoRef.current.currentTime / videoRef.current.duration;
@@ -162,8 +245,8 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
         </video>
 
         {/* Sophisticated Dark Luxury Vignette & Contrast Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-black/75 z-10 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-black/65 z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 z-10 pointer-events-none" />
 
         {/* Section Top Header & Coordinates */}
         <div className="absolute top-8 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">
@@ -185,45 +268,48 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
         <div className="relative z-20 max-w-7xl w-full mx-auto px-6 sm:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pointer-events-none">
           {/* Main Story Card (Left Side) */}
           <div className="lg:col-span-6 bg-black/60 backdrop-blur-2xl border border-white/15 p-8 sm:p-10 rounded-2xl shadow-2xl pointer-events-auto transition-all duration-500">
-            {/* Phase Tag */}
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="px-2.5 py-1 rounded bg-champagne/20 border border-champagne/40 text-champagne text-[10px] font-mono font-bold tracking-widest">
-                ACT {activePhase.phase}
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-champagne/90 font-semibold">
-                {activePhase.eyebrow}
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h2 className="font-editorial text-2xl sm:text-4xl text-white font-light leading-tight mb-4">
-              {activePhase.title}
-            </h2>
-
-            {/* Description */}
-            <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed mb-6">
-              {activePhase.description}
-            </p>
-
-            {/* Architectural Stat Highlight */}
-            <div className="pt-5 border-t border-white/10 flex items-center justify-between">
-              <div>
-                <span className="block text-[10px] uppercase tracking-wider text-white/50">
-                  {activePhase.statLabel}
+            {/* Animated card body on phase change */}
+            <div key={activePhase.phase} className="transition-all duration-300">
+              {/* Phase Tag */}
+              <div className="flex items-center space-x-3 mb-4">
+                <span className="px-2.5 py-1 rounded bg-champagne/20 border border-champagne/40 text-champagne text-[10px] font-mono font-bold tracking-widest">
+                  ACT {activePhase.phase}
                 </span>
-                <span className="text-base sm:text-lg font-serif font-semibold text-champagne">
-                  {activePhase.statValue}
+                <span className="text-[10px] uppercase tracking-[0.2em] text-champagne/90 font-semibold">
+                  {activePhase.eyebrow}
                 </span>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={onOpenValuation}
-                  className="px-4 py-2 rounded-full bg-champagne hover:bg-champagne-light text-charcoal text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center space-x-1.5"
-                >
-                  <span>Valuate Now</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
+              {/* Headline */}
+              <h2 className="font-editorial text-2xl sm:text-4xl text-white font-light leading-tight mb-4">
+                {activePhase.title}
+              </h2>
+
+              {/* Description */}
+              <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed mb-6">
+                {activePhase.description}
+              </p>
+
+              {/* Architectural Stat Highlight */}
+              <div className="pt-5 border-t border-white/10 flex items-center justify-between">
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-white/50">
+                    {activePhase.statLabel}
+                  </span>
+                  <span className="text-base sm:text-lg font-serif font-semibold text-champagne">
+                    {activePhase.statValue}
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={onOpenValuation}
+                    className="px-4 py-2 rounded-full bg-champagne hover:bg-champagne-light text-charcoal text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center space-x-1.5 shadow-md"
+                  >
+                    <span>Valuate Now</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -263,14 +349,18 @@ export const Scrollytelling: React.FC<ScrollytellingProps> = ({
           <div className="flex items-center space-x-3">
             <button
               onClick={toggleManualPlay}
-              className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center"
+              className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 transition-all flex items-center justify-center shadow-sm"
               title={isManualPlaying ? 'Pause video' : 'Play video automatically'}
               aria-label="Toggle Drone Tour Playback"
             >
               {isManualPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </button>
             <span className="text-xs text-white/70 tracking-wide font-light">
-              {isManualPlaying ? 'Autoplaying FPV Drone Tour' : 'Scroll down to scrub cinematic footage'}
+              {isManualPlaying
+                ? 'Autoplaying FPV Drone Tour'
+                : prefersReducedMotion
+                ? 'Reduced motion mode: Scroll down to progress story acts'
+                : 'Scroll down to scrub cinematic footage'}
             </span>
           </div>
 

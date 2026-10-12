@@ -41,6 +41,11 @@ export const Hero: React.FC<HeroProps> = ({
         PRESERVED HERO VIDEO ASSET
         Streamed directly from original file 'landing page.mp4' via /videos/hero
       */}
+      <img
+        src="/assets/images/hmx_glass_pavilion.jpg"
+        alt="Architectural Estate"
+        className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+      />
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
@@ -49,6 +54,7 @@ export const Hero: React.FC<HeroProps> = ({
         muted
         playsInline
         preload="auto"
+        poster="/assets/images/hmx_glass_pavilion.jpg"
       >
         <source src="/videos/hero" type="video/mp4" />
         Your browser does not support HTML5 video playback.

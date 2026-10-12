@@ -75,7 +75,10 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#111111] selection:bg-[#C5A880]/20 selection:text-[#111111] font-sans antialiased overflow-x-hidden">
+    <div
+      className="min-h-screen bg-white text-[#111111] selection:bg-[#C5A880]/20 selection:text-[#111111] font-sans antialiased"
+      style={{ overflowX: 'clip' }}
+    >
       {/* Fixed Luxury Navigation Header */}
       <Header
         activeTab={activeTab}
