@@ -1,0 +1,17 @@
+# Dependencies / build output
+node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Original media assets are kept out of git deliberately (large binaries).
+# They are referenced in place and must never be modified. Their SHA-256
+# fingerprints are recorded in backend/media_fingerprints.json.
+*.mp4
+
+# Secrets
+.env
+.env.*
+!.env.example

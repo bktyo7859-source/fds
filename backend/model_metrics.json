@@ -1,0 +1,65 @@
+{
+  "total_samples": 545,
+  "train_r2": 0.8742,
+  "test_r2": 0.6433,
+  "cv_5fold_r2_mean": 0.6243,
+  "cv_5fold_r2_std": 0.0491,
+  "mae": 994646.0,
+  "rmse": 1342755.0,
+  "residual_std_error": 1423391.0,
+  "feature_importances": [
+    {
+      "feature": "area",
+      "importance": 45.72
+    },
+    {
+      "feature": "bathrooms",
+      "importance": 16.22
+    },
+    {
+      "feature": "airconditioning_yes",
+      "importance": 8.91
+    },
+    {
+      "feature": "parking",
+      "importance": 5.68
+    },
+    {
+      "feature": "stories",
+      "importance": 5.23
+    },
+    {
+      "feature": "bedrooms",
+      "importance": 4.67
+    },
+    {
+      "feature": "basement_yes",
+      "importance": 3.22
+    },
+    {
+      "feature": "furnishingstatus_unfurnished",
+      "importance": 2.84
+    },
+    {
+      "feature": "prefarea_yes",
+      "importance": 2.75
+    },
+    {
+      "feature": "hotwaterheating_yes",
+      "importance": 1.74
+    },
+    {
+      "feature": "mainroad_yes",
+      "importance": 1.7
+    },
+    {
+      "feature": "guestroom_yes",
+      "importance": 1.05
+    },
+    {
+      "feature": "furnishingstatus_semi-furnished",
+      "importance": 0.27
+    }
+  ],
+  "training_algorithm": "GradientBoostingRegressor (scikit-learn 1.6+)"
+}
