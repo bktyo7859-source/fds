@@ -1,6 +1,6 @@
 import { Property, ValuationRequestPayload, ValuationResult, MarketAnalytics } from '../types';
 
-const BASE_URL = '';
+const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '';
 
 export async function getProperties(params?: {
   min_price?: number;

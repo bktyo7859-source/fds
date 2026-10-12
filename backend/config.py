@@ -6,12 +6,20 @@ import os
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 
-DATASET_PATH = os.path.join(PROJECT_ROOT, "Housing.csv")
+DATASET_PATH = (
+    os.path.join(BACKEND_DIR, "Housing.csv")
+    if os.path.exists(os.path.join(BACKEND_DIR, "Housing.csv"))
+    else os.path.join(PROJECT_ROOT, "Housing.csv")
+)
 ARTIFACT_DIR = os.path.join(BACKEND_DIR, "artifacts")
 MODEL_PATH = os.path.join(ARTIFACT_DIR, "model.joblib")
 MODEL_CARD_PATH = os.path.join(ARTIFACT_DIR, "model_card.json")
 MEDIA_FINGERPRINTS_PATH = os.path.join(BACKEND_DIR, "media_fingerprints.json")
-IMAGES_DIR = os.path.join(PROJECT_ROOT, "assets", "images")
+IMAGES_DIR = (
+    os.path.join(BACKEND_DIR, "assets", "images")
+    if os.path.exists(os.path.join(BACKEND_DIR, "assets", "images"))
+    else os.path.join(PROJECT_ROOT, "assets", "images")
+)
 
 # Original media — referenced in place, never modified.
 HERO_VIDEO_PATH = os.path.join(PROJECT_ROOT, "landing page.mp4")
