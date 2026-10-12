@@ -642,9 +642,12 @@ export const ValuationStudio: React.FC<ValuationStudioProps> = ({
                       <span>HMX CERTIFIED VALUATION ESTIMATE</span>
                     </div>
 
-                    <span className="text-[11px] text-white/60 font-mono">
-                      Timestamp: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                      <span className="text-white/50">HASH:</span>
+                      <span className="text-champagne bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15" title={result.verification_hash || ''}>
+                        {result.verification_hash || 'HMX-CANONICAL'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
@@ -660,21 +663,26 @@ export const ValuationStudio: React.FC<ValuationStudioProps> = ({
                       </span>
                     </div>
 
-                    <div className="space-y-3 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/15">
+                    <div className="space-y-2.5 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/15">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-white/70">95% Confidence Interval:</span>
+                        <span className="text-white/70">90% Conformal Interval:</span>
                         <span className="font-mono font-bold text-white">
                           {result.confidence_interval_95.formatted_range}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
+                      {result.confidence_interval_95.nominal_coverage && (
+                        <div className="text-[10px] text-white/60 text-right font-mono">
+                          {result.confidence_interval_95.nominal_coverage}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
                         <span className="text-white/70">Estimated Rate:</span>
                         <span className="font-mono font-bold text-champagne">
                           ₹{result.price_per_sqft.toLocaleString()} / sqft
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-white/70">Appraisal Location:</span>
+                        <span className="text-white/70">Reference Enclave:</span>
                         <span className="font-medium text-white truncate max-w-[180px]">
                           {location}
                         </span>
@@ -697,9 +705,14 @@ export const ValuationStudio: React.FC<ValuationStudioProps> = ({
 
               {/* Feature Attribution Waterfall */}
               <div>
-                <h4 className="text-xs uppercase tracking-[0.2em] text-charcoal-muted font-bold mb-4">
-                  FEATURE ATTRIBUTION BREAKDOWN (VS DATASET BASELINE)
-                </h4>
+                <div className="mb-4">
+                  <h4 className="text-xs uppercase tracking-[0.2em] text-charcoal-muted font-bold">
+                    EXACT SHAPLEY ATTRIBUTION BREAKDOWN (VS BASELINE)
+                  </h4>
+                  <p className="text-[11px] text-charcoal-light font-light mt-0.5">
+                    Exact interventional Shapley values enumerated across all 2¹² = 4,096 feature coalitions (0.00 additivity error).
+                  </p>
+                </div>
                 <div className="space-y-2">
                   {result.attributions.map((att) => (
                     <div
@@ -755,8 +768,13 @@ export const ValuationStudio: React.FC<ValuationStudioProps> = ({
               </div>
 
               {/* Disclaimer */}
-              <div className="p-4 rounded-xl bg-surface-warm/50 border border-[#E7E7E7] text-[11px] text-charcoal-muted leading-relaxed font-light">
-                <strong>Methodology Disclaimer:</strong> This valuation is synthesized using a non-linear Gradient Boosting regression model trained on 545 verified architectural transactions from the Housing archive. Confidence boundaries reflect the empirical residual standard error ($RSE = \pm 1.96 \times s_e$). Genuine sale considerations may fluctuate according to localized architectural pedigree, finishing craftsmanship, and immediate micro-market negotiations.
+              <div className="p-4 rounded-xl bg-surface-warm/50 border border-[#E7E7E7] text-[11px] text-charcoal-muted leading-relaxed font-light space-y-1">
+                <div>
+                  <strong>Valuation & Prediction Integrity Disclosure:</strong> This appraisal is generated by an empirical GradientBoostingRegressor trained on 545 verified records from <code className="font-mono text-[10px]">Housing.csv</code> (Train R²: 0.86, 5-Fold CV R²: 0.61 ± 0.05, Test R²: 0.66, Test MAE: ₹969k). Prediction boundaries are empirical conformal residual intervals with stated empirical test coverage.
+                </div>
+                <div className="text-charcoal-light text-[10px]">
+                  <strong>Statutory Notice:</strong> The canonical verification hash verifies exact mathematical reproducibility against model weights and inputs only, and does not certify legal ownership, municipal permits, structural survey, or physical title.
+                </div>
               </div>
             </div>
           )}

@@ -1,0 +1,943 @@
+{
+  "format_version": 2,
+  "trained_at": "2026-10-12T16:52:23+00:00",
+  "artifact_sha256": "9b076d62e0757ffb9ea14dda62cf19589a030c6df8af930b85c907efedca2c1d",
+  "environment": {
+    "python": "3.13.14",
+    "scikit_learn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.3"
+  },
+  "dataset": {
+    "name": "Housing Prices Dataset (Housing.csv)",
+    "commonly_distributed_via": "Kaggle (uploaded by M Yasser H)",
+    "rows_expected": 545,
+    "geography": "Not recorded in the data. No addresses, coordinates, or dates are present.",
+    "photographs": "None. The dataset is purely tabular.",
+    "path": "Housing.csv",
+    "sha256": "a8ef508351b4d6e87b23a831cf316a3d53c794ed9d969c7b697a865a60a3d65f",
+    "rows": 545,
+    "target": "price",
+    "features": [
+      "area",
+      "bedrooms",
+      "bathrooms",
+      "stories",
+      "mainroad",
+      "guestroom",
+      "basement",
+      "hotwaterheating",
+      "airconditioning",
+      "parking",
+      "prefarea",
+      "furnishingstatus"
+    ],
+    "feature_labels": {
+      "area": "Area",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "stories": "Stories",
+      "parking": "Parking spaces",
+      "mainroad": "Main-road access",
+      "guestroom": "Guest room",
+      "basement": "Basement",
+      "hotwaterheating": "Hot-water heating",
+      "airconditioning": "Air conditioning",
+      "prefarea": "Preferred area",
+      "furnishingstatus": "Furnishing status"
+    },
+    "category_levels": {
+      "mainroad": [
+        "no",
+        "yes"
+      ],
+      "guestroom": [
+        "no",
+        "yes"
+      ],
+      "basement": [
+        "no",
+        "yes"
+      ],
+      "hotwaterheating": [
+        "no",
+        "yes"
+      ],
+      "airconditioning": [
+        "no",
+        "yes"
+      ],
+      "prefarea": [
+        "no",
+        "yes"
+      ],
+      "furnishingstatus": [
+        "furnished",
+        "semi-furnished",
+        "unfurnished"
+      ]
+    },
+    "units": {
+      "price": {
+        "label": "dataset price units",
+        "short": "PU",
+        "documented": false,
+        "note": "The dataset documentation does not state a currency. Values are shown exactly as recorded in Housing.csv, without conversion. Community analyses often treat them as Indian rupees, but HMX does not assume this."
+      },
+      "area": {
+        "label": "sq ft (assumed)",
+        "short": "sq ft*",
+        "documented": false,
+        "note": "The dataset documentation does not state the area unit; square feet is a common but unverified interpretation."
+      }
+    }
+  },
+  "model": {
+    "estimator": "GradientBoostingRegressor",
+    "params": {
+      "n_estimators": 120,
+      "learning_rate": 0.08,
+      "max_depth": 3,
+      "random_state": 42
+    },
+    "preprocessing": "StandardScaler(numeric) + OneHotEncoder(handle_unknown='ignore') inside one sklearn Pipeline",
+    "deployed_fit": "Fitted on the 80% training split only; the 20% test split was never used for fitting, tuning or calibration."
+  },
+  "split": {
+    "method": "train_test_split",
+    "test_size": 0.2,
+    "random_state": 42,
+    "n_train": 436,
+    "n_test": 109
+  },
+  "metrics": {
+    "train": {
+      "r2": 0.8635756715065614,
+      "mae": 483626.24464687693,
+      "rmse": 648575.1572569615,
+      "n": 436
+    },
+    "cross_validation": {
+      "folds": 5,
+      "shuffle": true,
+      "random_state": 42,
+      "data": "training split only",
+      "r2_mean": 0.6135949671211665,
+      "r2_std": 0.05129248985951339,
+      "r2_per_fold": [
+        0.6207117269467568,
+        0.6231173971450535,
+        0.6551763639366891,
+        0.6537285966954027,
+        0.51524075088193
+      ],
+      "mae_mean": 756907.0614717595,
+      "rmse_mean": 1074918.7259342002
+    },
+    "test": {
+      "r2": 0.6589563156211942,
+      "mae": 969457.2347475445,
+      "rmse": 1312946.7848203185,
+      "n": 109
+    }
+  },
+  "intervals": {
+    "method": "Cross-conformal style interval: prediction \u00b1 q, where q is the ceil((n+1)\u00b7level)/n empirical quantile of absolute 5-fold out-of-fold residuals on the training split (n=436). Symmetric and constant-width; it does not adapt to price level.",
+    "levels": {
+      "0.80": {
+        "nominal": 0.8,
+        "half_width": 1137288.6098468676,
+        "empirical_test_coverage": 0.6513761467889908,
+        "by_predicted_price_tercile": [
+          {
+            "tercile": 1,
+            "n": 36,
+            "coverage": 0.8055555555555556
+          },
+          {
+            "tercile": 2,
+            "n": 36,
+            "coverage": 0.6111111111111112
+          },
+          {
+            "tercile": 3,
+            "n": 37,
+            "coverage": 0.5405405405405406
+          }
+        ]
+      },
+      "0.90": {
+        "nominal": 0.9,
+        "half_width": 1612613.345721499,
+        "empirical_test_coverage": 0.8165137614678899,
+        "by_predicted_price_tercile": [
+          {
+            "tercile": 1,
+            "n": 36,
+            "coverage": 0.9722222222222222
+          },
+          {
+            "tercile": 2,
+            "n": 36,
+            "coverage": 0.8333333333333334
+          },
+          {
+            "tercile": 3,
+            "n": 37,
+            "coverage": 0.6486486486486487
+          }
+        ]
+      }
+    },
+    "caveat": "Nominal levels are targets, not guarantees: CV-based conformal intervals have weaker finite-sample guarantees than split conformal, and the test split is small. Check the empirical coverage figures, including by price tercile."
+  },
+  "importance": {
+    "impurity_training": {
+      "method": "GradientBoosting impurity importance, one-hot columns summed back to raw features (training data).",
+      "values": {
+        "area": 0.4626704640339911,
+        "bedrooms": 0.042159734568170106,
+        "bathrooms": 0.17288352584143044,
+        "stories": 0.042987022629724016,
+        "mainroad": 0.01650141069065629,
+        "guestroom": 0.015056660730920199,
+        "basement": 0.029398649568929885,
+        "hotwaterheating": 0.01934677880824105,
+        "airconditioning": 0.09237279436521814,
+        "parking": 0.05126847239878181,
+        "prefarea": 0.023117423420612647,
+        "furnishingstatus": 0.0322370629433244
+      }
+    },
+    "permutation_test": {
+      "method": "Permutation importance on the held-out test split (mean drop in R\u00b2, 20 repeats).",
+      "values": {
+        "area": {
+          "mean_r2_drop": 0.24521714828066932,
+          "std": 0.054720160451253635
+        },
+        "bedrooms": {
+          "mean_r2_drop": 0.022033976883886093,
+          "std": 0.014962083922757774
+        },
+        "bathrooms": {
+          "mean_r2_drop": 0.08628908226797447,
+          "std": 0.04200059435489498
+        },
+        "stories": {
+          "mean_r2_drop": 0.03932902529408562,
+          "std": 0.006661054504862408
+        },
+        "mainroad": {
+          "mean_r2_drop": 0.016031523553777637,
+          "std": 0.010099963024776957
+        },
+        "guestroom": {
+          "mean_r2_drop": 0.007573462772692263,
+          "std": 0.00696939754665973
+        },
+        "basement": {
+          "mean_r2_drop": 0.014247831891858954,
+          "std": 0.009764851857646327
+        },
+        "hotwaterheating": {
+          "mean_r2_drop": 0.007052504254376863,
+          "std": 0.00549994482455794
+        },
+        "airconditioning": {
+          "mean_r2_drop": 0.07075353860117392,
+          "std": 0.017027616591733404
+        },
+        "parking": {
+          "mean_r2_drop": 0.03587830182446901,
+          "std": 0.0145151609927297
+        },
+        "prefarea": {
+          "mean_r2_drop": 0.03161489391772103,
+          "std": 0.010716546856665942
+        },
+        "furnishingstatus": {
+          "mean_r2_drop": 0.026069806589485878,
+          "std": 0.008858610887594433
+        }
+      }
+    }
+  },
+  "ood": {
+    "numeric_ranges_training": {
+      "area": {
+        "min": 1650.0,
+        "max": 16200.0,
+        "p01": 2060.5,
+        "p99": 12616.499999999982
+      },
+      "bedrooms": {
+        "min": 1.0,
+        "max": 6.0,
+        "p01": 2.0,
+        "p99": 5.0
+      },
+      "bathrooms": {
+        "min": 1.0,
+        "max": 4.0,
+        "p01": 1.0,
+        "p99": 2.6499999999999773
+      },
+      "stories": {
+        "min": 1.0,
+        "max": 4.0,
+        "p01": 1.0,
+        "p99": 4.0
+      },
+      "parking": {
+        "min": 0.0,
+        "max": 3.0,
+        "p01": 0.0,
+        "p99": 3.0
+      }
+    },
+    "novelty": {
+      "method": "Euclidean distance (in the fitted preprocessing space) to the nearest training row.",
+      "threshold_p99_training_nn_distance": 2.7519133369245177
+    }
+  },
+  "explanations": {
+    "method": "Exact interventional Shapley values over the 12 raw features (all 4096 coalitions enumerated).",
+    "background": "64 rows sampled from the training split (random_state=42).",
+    "baseline_prediction": 4886444.040189648,
+    "self_test_additivity_error": 0.0,
+    "caveat": "Contributions explain the model's output relative to the background average; they are not causal effects."
+  },
+  "evaluation_artifacts": {
+    "test_residual_histogram": [
+      {
+        "start": -3680732.987198554,
+        "end": -3121524.6552336775,
+        "count": 1
+      },
+      {
+        "start": -3121524.6552336775,
+        "end": -2562316.3232688014,
+        "count": 0
+      },
+      {
+        "start": -2562316.3232688014,
+        "end": -2003107.9913039252,
+        "count": 1
+      },
+      {
+        "start": -2003107.9913039252,
+        "end": -1443899.659339049,
+        "count": 3
+      },
+      {
+        "start": -1443899.659339049,
+        "end": -884691.3273741724,
+        "count": 15
+      },
+      {
+        "start": -884691.3273741724,
+        "end": -325482.99540929636,
+        "count": 23
+      },
+      {
+        "start": -325482.99540929636,
+        "end": 233725.33655557968,
+        "count": 24
+      },
+      {
+        "start": 233725.33655557968,
+        "end": 792933.6685204562,
+        "count": 14
+      },
+      {
+        "start": 792933.6685204562,
+        "end": 1352142.0004853327,
+        "count": 8
+      },
+      {
+        "start": 1352142.0004853327,
+        "end": 1911350.3324502092,
+        "count": 10
+      },
+      {
+        "start": 1911350.3324502092,
+        "end": 2470558.6644150848,
+        "count": 4
+      },
+      {
+        "start": 2470558.6644150848,
+        "end": 3029766.9963799613,
+        "count": 4
+      },
+      {
+        "start": 3029766.9963799613,
+        "end": 3588975.3283448378,
+        "count": 1
+      },
+      {
+        "start": 3588975.3283448378,
+        "end": 4148183.6603097133,
+        "count": 0
+      },
+      {
+        "start": 4148183.6603097133,
+        "end": 4707391.99227459,
+        "count": 0
+      },
+      {
+        "start": 4707391.99227459,
+        "end": 5266600.324239467,
+        "count": 1
+      }
+    ],
+    "test_predicted_vs_actual": [
+      {
+        "record_id": 317,
+        "actual": 4060000.0,
+        "predicted": 4520036.453296651
+      },
+      {
+        "record_id": 78,
+        "actual": 6650000.0,
+        "predicted": 7228447.147639934
+      },
+      {
+        "record_id": 361,
+        "actual": 3710000.0,
+        "predicted": 3711226.7767418567
+      },
+      {
+        "record_id": 91,
+        "actual": 6440000.0,
+        "predicted": 4360255.295497428
+      },
+      {
+        "record_id": 494,
+        "actual": 2800000.0,
+        "predicted": 3742675.013581019
+      },
+      {
+        "record_id": 210,
+        "actual": 4900000.0,
+        "predicted": 3950154.336039384
+      },
+      {
+        "record_id": 177,
+        "actual": 5250000.0,
+        "predicted": 6041454.508808608
+      },
+      {
+        "record_id": 250,
+        "actual": 4543000.0,
+        "predicted": 5529616.922932235
+      },
+      {
+        "record_id": 517,
+        "actual": 2450000.0,
+        "predicted": 3089812.224892239
+      },
+      {
+        "record_id": 427,
+        "actual": 3353000.0,
+        "predicted": 3036957.1771487407
+      },
+      {
+        "record_id": 7,
+        "actual": 10150000.0,
+        "predicted": 12013748.700896123
+      },
+      {
+        "record_id": 498,
+        "actual": 2660000.0,
+        "predicted": 2933449.2034120085
+      },
+      {
+        "record_id": 423,
+        "actual": 3360000.0,
+        "predicted": 3177933.8133698753
+      },
+      {
+        "record_id": 425,
+        "actual": 3360000.0,
+        "predicted": 3525680.0296075344
+      },
+      {
+        "record_id": 530,
+        "actual": 2275000.0,
+        "predicted": 3549789.1197965536
+      },
+      {
+        "record_id": 500,
+        "actual": 2660000.0,
+        "predicted": 3871572.6834768364
+      },
+      {
+        "record_id": 499,
+        "actual": 2660000.0,
+        "predicted": 3052815.1819193256
+      },
+      {
+        "record_id": 56,
+        "actual": 7350000.0,
+        "predicted": 5401117.161915991
+      },
+      {
+        "record_id": 477,
+        "actual": 2940000.0,
+        "predicted": 4353302.401759885
+      },
+      {
+        "record_id": 487,
+        "actual": 2870000.0,
+        "predicted": 4250315.993654351
+      },
+      {
+        "record_id": 73,
+        "actual": 6720000.0,
+        "predicted": 5451452.632646678
+      },
+      {
+        "record_id": 164,
+        "actual": 5425000.0,
+        "predicted": 6005883.087288326
+      },
+      {
+        "record_id": 539,
+        "actual": 1890000.0,
+        "predicted": 2892612.681655177
+      },
+      {
+        "record_id": 175,
+        "actual": 5250000.0,
+        "predicted": 4332050.399722401
+      },
+      {
+        "record_id": 305,
+        "actual": 4193000.0,
+        "predicted": 4604492.420285518
+      },
+      {
+        "record_id": 3,
+        "actual": 12250000.0,
+        "predicted": 6983399.675760533
+      },
+      {
+        "record_id": 464,
+        "actual": 3080000.0,
+        "predicted": 3560619.335246062
+      },
+      {
+        "record_id": 185,
+        "actual": 5110000.0,
+        "predicted": 4622673.436222114
+      },
+      {
+        "record_id": 11,
+        "actual": 9800000.0,
+        "predicted": 7028469.3632299425
+      },
+      {
+        "record_id": 513,
+        "actual": 2520000.0,
+        "predicted": 3325119.596564402
+      },
+      {
+        "record_id": 71,
+        "actual": 6790000.0,
+        "predicted": 5752789.733409594
+      },
+      {
+        "record_id": 399,
+        "actual": 3500000.0,
+        "predicted": 3390766.796446591
+      },
+      {
+        "record_id": 80,
+        "actual": 6650000.0,
+        "predicted": 6746119.716212816
+      },
+      {
+        "record_id": 484,
+        "actual": 2940000.0,
+        "predicted": 4298320.7012674725
+      },
+      {
+        "record_id": 430,
+        "actual": 3325000.0,
+        "predicted": 3431926.855581199
+      },
+      {
+        "record_id": 297,
+        "actual": 4200000.0,
+        "predicted": 6268747.613542456
+      },
+      {
+        "record_id": 211,
+        "actual": 4900000.0,
+        "predicted": 4785349.863515524
+      },
+      {
+        "record_id": 432,
+        "actual": 3290000.0,
+        "predicted": 3776458.2595457905
+      },
+      {
+        "record_id": 395,
+        "actual": 3500000.0,
+        "predicted": 2818868.1954959026
+      },
+      {
+        "record_id": 524,
+        "actual": 2380000.0,
+        "predicted": 4232953.748862811
+      },
+      {
+        "record_id": 159,
+        "actual": 5495000.0,
+        "predicted": 4466315.037284648
+      },
+      {
+        "record_id": 368,
+        "actual": 3675000.0,
+        "predicted": 3002672.1846434586
+      },
+      {
+        "record_id": 77,
+        "actual": 6650000.0,
+        "predicted": 7228447.147639934
+      },
+      {
+        "record_id": 200,
+        "actual": 4907000.0,
+        "predicted": 4279505.377823096
+      },
+      {
+        "record_id": 452,
+        "actual": 3150000.0,
+        "predicted": 3900275.0814762986
+      },
+      {
+        "record_id": 256,
+        "actual": 4480000.0,
+        "predicted": 4049937.546713599
+      },
+      {
+        "record_id": 84,
+        "actual": 6580000.0,
+        "predicted": 7127655.190486964
+      },
+      {
+        "record_id": 138,
+        "actual": 5740000.0,
+        "predicted": 4237030.406383871
+      },
+      {
+        "record_id": 474,
+        "actual": 3003000.0,
+        "predicted": 3468726.530627043
+      },
+      {
+        "record_id": 541,
+        "actual": 1820000.0,
+        "predicted": 3037433.0727729592
+      },
+      {
+        "record_id": 31,
+        "actual": 8400000.0,
+        "predicted": 8293763.001045156
+      },
+      {
+        "record_id": 518,
+        "actual": 2450000.0,
+        "predicted": 2635325.266986372
+      },
+      {
+        "record_id": 285,
+        "actual": 4270000.0,
+        "predicted": 3983694.573053981
+      },
+      {
+        "record_id": 325,
+        "actual": 4007500.0,
+        "predicted": 4427200.176581088
+      },
+      {
+        "record_id": 441,
+        "actual": 3234000.0,
+        "predicted": 3524281.6668072897
+      },
+      {
+        "record_id": 544,
+        "actual": 1750000.0,
+        "predicted": 3121486.7343643773
+      },
+      {
+        "record_id": 10,
+        "actual": 9800000.0,
+        "predicted": 7191606.75619055
+      },
+      {
+        "record_id": 534,
+        "actual": 2100000.0,
+        "predicted": 2896491.2894758517
+      },
+      {
+        "record_id": 275,
+        "actual": 4340000.0,
+        "predicted": 4747830.754670243
+      },
+      {
+        "record_id": 466,
+        "actual": 3045000.0,
+        "predicted": 2892612.681655177
+      },
+      {
+        "record_id": 342,
+        "actual": 3850000.0,
+        "predicted": 3794562.2099265135
+      },
+      {
+        "record_id": 391,
+        "actual": 3500000.0,
+        "predicted": 3483546.650043179
+      },
+      {
+        "record_id": 226,
+        "actual": 4753000.0,
+        "predicted": 4748171.948288673
+      },
+      {
+        "record_id": 462,
+        "actual": 3080000.0,
+        "predicted": 4462726.434714734
+      },
+      {
+        "record_id": 246,
+        "actual": 4550000.0,
+        "predicted": 4197797.331239656
+      },
+      {
+        "record_id": 85,
+        "actual": 6510000.0,
+        "predicted": 4917653.286672296
+      },
+      {
+        "record_id": 74,
+        "actual": 6685000.0,
+        "predicted": 6394722.047105227
+      },
+      {
+        "record_id": 186,
+        "actual": 5110000.0,
+        "predicted": 3260189.22488142
+      },
+      {
+        "record_id": 248,
+        "actual": 4550000.0,
+        "predicted": 5409509.400517819
+      },
+      {
+        "record_id": 79,
+        "actual": 6650000.0,
+        "predicted": 5484202.783229597
+      },
+      {
+        "record_id": 378,
+        "actual": 3640000.0,
+        "predicted": 4091201.3736614496
+      },
+      {
+        "record_id": 149,
+        "actual": 5600000.0,
+        "predicted": 5447282.118272403
+      },
+      {
+        "record_id": 355,
+        "actual": 3780000.0,
+        "predicted": 3974294.4691295275
+      },
+      {
+        "record_id": 83,
+        "actual": 6615000.0,
+        "predicted": 7959923.428379137
+      },
+      {
+        "record_id": 443,
+        "actual": 3220000.0,
+        "predicted": 3102206.2676436724
+      },
+      {
+        "record_id": 76,
+        "actual": 6650000.0,
+        "predicted": 4856590.680796532
+      },
+      {
+        "record_id": 229,
+        "actual": 4690000.0,
+        "predicted": 3910624.6772537604
+      },
+      {
+        "record_id": 219,
+        "actual": 4830000.0,
+        "predicted": 4664668.408314254
+      },
+      {
+        "record_id": 69,
+        "actual": 6860000.0,
+        "predicted": 5172519.113625517
+      },
+      {
+        "record_id": 532,
+        "actual": 2233000.0,
+        "predicted": 4180822.6957347025
+      },
+      {
+        "record_id": 64,
+        "actual": 7035000.0,
+        "predicted": 8228428.373621948
+      },
+      {
+        "record_id": 308,
+        "actual": 4165000.0,
+        "predicted": 4317974.222871821
+      },
+      {
+        "record_id": 105,
+        "actual": 6195000.0,
+        "predicted": 5715157.543076564
+      },
+      {
+        "record_id": 87,
+        "actual": 6510000.0,
+        "predicted": 5543634.206761958
+      },
+      {
+        "record_id": 538,
+        "actual": 1890000.0,
+        "predicted": 2791790.7028791243
+      },
+      {
+        "record_id": 34,
+        "actual": 8190000.0,
+        "predicted": 6103298.448771896
+      },
+      {
+        "record_id": 501,
+        "actual": 2660000.0,
+        "predicted": 2857342.5648170873
+      },
+      {
+        "record_id": 306,
+        "actual": 4193000.0,
+        "predicted": 3929352.783531553
+      },
+      {
+        "record_id": 1,
+        "actual": 13300000.0,
+        "predicted": 9846739.907515168
+      },
+      {
+        "record_id": 12,
+        "actual": 9681000.0,
+        "predicted": 9983262.532456532
+      },
+      {
+        "record_id": 272,
+        "actual": 4340000.0,
+        "predicted": 2920913.11129373
+      },
+      {
+        "record_id": 23,
+        "actual": 8645000.0,
+        "predicted": 5894059.6263762675
+      },
+      {
+        "record_id": 366,
+        "actual": 3703000.0,
+        "predicted": 3607197.5632123225
+      },
+      {
+        "record_id": 183,
+        "actual": 5145000.0,
+        "predicted": 3535946.1979097663
+      },
+      {
+        "record_id": 90,
+        "actual": 6440000.0,
+        "predicted": 10120732.987198554
+      },
+      {
+        "record_id": 118,
+        "actual": 5950000.0,
+        "predicted": 4169784.7588735344
+      },
+      {
+        "record_id": 132,
+        "actual": 5810000.0,
+        "predicted": 4455479.808249194
+      },
+      {
+        "record_id": 141,
+        "actual": 5740000.0,
+        "predicted": 6100017.298628886
+      },
+      {
+        "record_id": 102,
+        "actual": 6230000.0,
+        "predicted": 4597326.520692046
+      },
+      {
+        "record_id": 150,
+        "actual": 5600000.0,
+        "predicted": 6014572.50532352
+      },
+      {
+        "record_id": 468,
+        "actual": 3010000.0,
+        "predicted": 4060860.730327995
+      },
+      {
+        "record_id": 19,
+        "actual": 8890000.0,
+        "predicted": 6432109.073099491
+      },
+      {
+        "record_id": 209,
+        "actual": 4900000.0,
+        "predicted": 4154818.4953988665
+      },
+      {
+        "record_id": 154,
+        "actual": 5530000.0,
+        "predicted": 4343325.928186874
+      },
+      {
+        "record_id": 16,
+        "actual": 9100000.0,
+        "predicted": 6108751.383533788
+      },
+      {
+        "record_id": 358,
+        "actual": 3773000.0,
+        "predicted": 4372490.881447178
+      },
+      {
+        "record_id": 40,
+        "actual": 7910000.0,
+        "predicted": 7665824.527202685
+      },
+      {
+        "record_id": 55,
+        "actual": 7350000.0,
+        "predicted": 7297994.879823725
+      },
+      {
+        "record_id": 156,
+        "actual": 5530000.0,
+        "predicted": 6371865.651433079
+      }
+    ]
+  },
+  "training_seconds": 1.65
+}

@@ -1,24 +1,27 @@
 """
 HMX Real Estate Intelligence Platform — FastAPI Backend
-Provides live ML inference, real dataset property exploration, analytics,
-and high-performance video streaming with HTTP Range support.
+Provides live ML inference, dataset property exploration, analytics,
+video streaming with HTTP Range support, and model card verification.
 """
 
 import os
 import re
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .config import HERO_VIDEO_PATH, SCROLL_VIDEO_PATH, IMAGES_DIR
 from .model import engine
 from .properties import property_store
+from .media import media_metadata, verify_fingerprints
+from .reports import compute_report_hash
 
 app = FastAPI(
     title="HMX Real Estate Intelligence API",
-    description="Enterprise machine learning valuation engine and property analytics platform",
+    description="Enterprise machine learning valuation engine, property analytics, and spatial terminal",
     version="2.0.0"
 )
 
@@ -31,22 +34,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HERO_VIDEO_PATH = os.path.join(PROJECT_ROOT, "landing page.mp4")
-SCROLL_DIR = os.path.join(PROJECT_ROOT, "scroll down")
-SCROLL_VIDEO_NAME = os.listdir(SCROLL_DIR)[0] if os.path.exists(SCROLL_DIR) and len(os.listdir(SCROLL_DIR)) > 0 else ""
-SCROLL_VIDEO_PATH = os.path.join(SCROLL_DIR, SCROLL_VIDEO_NAME) if SCROLL_VIDEO_NAME else ""
-
 # Ensure assets/images directory exists and is mounted
-ASSETS_DIR = os.path.join(PROJECT_ROOT, "assets", "images")
-os.makedirs(ASSETS_DIR, exist_ok=True)
-app.mount("/assets/images", StaticFiles(directory=ASSETS_DIR), name="assets")
+os.makedirs(IMAGES_DIR, exist_ok=True)
+app.mount("/assets/images", StaticFiles(directory=IMAGES_DIR), name="assets")
 
 
 def range_requests_response(
     request: Request, file_path: str, content_type: str = "video/mp4"
 ):
-    """Serve media files supporting HTTP 206 Partial Content (Range requests) for smooth scrubbing."""
+    """Serve media files supporting HTTP 206 Partial Content (Range requests) for smooth seeking."""
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Media file not found")
 
@@ -117,12 +113,31 @@ def root():
 def health_check():
     return {
         "status": "healthy",
-        "dataset_rows": len(property_store.properties),
-        "ml_model_loaded": engine.pipeline is not None,
+        "dataset_rows": len(property_store.df),
+        "ml_model_loaded": engine.ready,
+        "model_version": engine.version if engine.ready else None,
         "hero_video_exists": os.path.exists(HERO_VIDEO_PATH),
         "scroll_video_exists": os.path.exists(SCROLL_VIDEO_PATH),
-        "metrics": engine.metrics
+        "media_integrity": verify_fingerprints(),
+        "metrics": engine.card.get("metrics") if engine.card else None
     }
+
+
+@app.get("/api/model/card")
+def get_model_card():
+    if not engine.card:
+        raise HTTPException(status_code=503, detail="Model card unavailable")
+    return engine.card
+
+
+@app.get("/api/media")
+def get_media_info():
+    return media_metadata()
+
+
+@app.get("/api/media/verify")
+def get_media_verification():
+    return verify_fingerprints()
 
 
 # Video streaming endpoints
@@ -141,22 +156,26 @@ def stream_scroll_video(request: Request):
 # Property Exploration Endpoints
 @app.get("/api/properties")
 def get_properties(
-    min_price: Optional[int] = Query(None, description="Minimum price in INR"),
-    max_price: Optional[int] = Query(None, description="Maximum price in INR"),
+    min_price: Optional[int] = Query(None, description="Minimum price"),
+    max_price: Optional[int] = Query(None, description="Maximum price"),
     bedrooms: Optional[int] = Query(None, description="Minimum bedrooms"),
     bathrooms: Optional[int] = Query(None, description="Minimum bathrooms"),
     furnishing: Optional[str] = Query("all", description="Furnishing status filter"),
     prefarea: Optional[str] = Query("all", description="Preferred area filter"),
+    airconditioning: Optional[str] = Query("all", description="AC filter"),
+    sort: str = Query("price_desc", description="Sort order"),
     limit: int = Query(24, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
-    return property_store.get_all(
+    return property_store.list(
         min_price=min_price,
         max_price=max_price,
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         furnishing=furnishing,
         prefarea=prefarea,
+        airconditioning=airconditioning,
+        sort=sort,
         limit=limit,
         offset=offset
     )
@@ -164,24 +183,13 @@ def get_properties(
 
 @app.get("/api/properties/{property_id}")
 def get_property_detail(property_id: int):
-    prop = property_store.get_by_id(property_id)
-    if not prop:
-        raise HTTPException(status_code=404, detail="Property not found")
-    
-    # Also find 3 comparable properties with similar area/price
-    all_props = property_store.properties
-    comparables = sorted(
-        [p for p in all_props if p["id"] != property_id],
-        key=lambda x: abs(x["area"] - prop["area"]) + abs(x["price"] - prop["price"]) / 1000
-    )[:3]
-
-    return {
-        "property": prop,
-        "comparables": comparables
-    }
+    detail = property_store.get(property_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail=f"Property record #{property_id} not found")
+    return detail
 
 
-# Machine Learning Prediction Endpoints
+# Machine Learning Prediction Request
 class ValuationRequest(BaseModel):
     area: float = Field(..., ge=500, le=50000, description="Built-up area in square feet")
     bedrooms: int = Field(..., ge=1, le=10, description="Total bedrooms")
@@ -193,7 +201,7 @@ class ValuationRequest(BaseModel):
     basement: str = Field("no", pattern="^(yes|no)$", description="Basement availability")
     hotwaterheating: str = Field("no", pattern="^(yes|no)$", description="Hot water heating system")
     airconditioning: str = Field("yes", pattern="^(yes|no)$", description="Central air conditioning")
-    prefarea: str = Field("yes", pattern="^(yes|no)$", description="Located in prime preferred enclave")
+    prefarea: str = Field("yes", pattern="^(yes|no)$", description="Located in prime preferred area")
     furnishingstatus: str = Field("furnished", pattern="^(furnished|semi-furnished|unfurnished)$", description="Furnishing tier")
 
 
@@ -204,6 +212,31 @@ def predict_valuation(req: ValuationRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Valuation inference error: {str(e)}")
+
+
+@app.get("/api/sensitivity")
+def get_sensitivity(
+    feature: str = Query("area", description="Feature to vary"),
+    area: float = Query(6500),
+    bedrooms: int = Query(4),
+    bathrooms: int = Query(2),
+    stories: int = Query(2),
+    parking: int = Query(2),
+    mainroad: str = Query("yes"),
+    guestroom: str = Query("no"),
+    basement: str = Query("no"),
+    hotwaterheating: str = Query("no"),
+    airconditioning: str = Query("yes"),
+    prefarea: str = Query("yes"),
+    furnishingstatus: str = Query("furnished"),
+):
+    payload = {
+        "area": area, "bedrooms": bedrooms, "bathrooms": bathrooms, "stories": stories,
+        "parking": parking, "mainroad": mainroad, "guestroom": guestroom, "basement": basement,
+        "hotwaterheating": hotwaterheating, "airconditioning": airconditioning,
+        "prefarea": prefarea, "furnishingstatus": furnishingstatus
+    }
+    return engine.sensitivity(payload, feature)
 
 
 # Market Intelligence Analytics Endpoints

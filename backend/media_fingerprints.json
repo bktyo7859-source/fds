@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-10-12T22:17:48+05:30",
+  "note": "SHA-256 of the original, untouched media files, captured during the repository audit before any implementation changes.",
+  "files": {
+    "hero": {
+      "relative_path": "landing page.mp4",
+      "bytes": 53859465,
+      "sha256": "ed6b6944309e99f1bc811ec2b6980bec3bdc239a0989a66c4469a7171af45c7c"
+    },
+    "scroll": {
+      "relative_path": "scroll down/Real Estate - FPV Drone Virtual House Tour - Frimm Immobiliare Sardegna - salva.tours (1080p, h264).mp4",
+      "bytes": 40778103,
+      "sha256": "eb79168ae770d3c548c495dd47c9aa3734f159479931750883c80c5d73e27cb0"
+    }
+  }
+}

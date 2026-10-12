@@ -57,6 +57,7 @@ export interface ValuationResult {
     lower: number;
     upper: number;
     formatted_range: string;
+    nominal_coverage?: string;
   };
   price_per_sqft: number;
   attributions: FeatureAttribution[];
@@ -68,6 +69,32 @@ export interface ValuationResult {
     parking_spaces: number;
     furnishing: string;
     premium_amenities: string[];
+  };
+  model_version?: string;
+  verification_hash?: string;
+  verification_details?: {
+    algorithm: string;
+    canonical_payload_json: string;
+    verification_hash: string;
+    model_version: string;
+    prediction_raw: number;
+  };
+  intervals?: Array<{
+    nominal_level: number;
+    half_width: number;
+    lower: number;
+    upper: number;
+    empirical_test_coverage: number;
+  }>;
+  interval_method?: string;
+  interval_caveat?: string;
+  ood?: {
+    in_distribution: boolean;
+    severity: string;
+    flags: Array<{ feature: string; value: any; message: string }>;
+    novelty_distance: number;
+    novelty_threshold: number;
+    scope_note: string;
   };
 }
 

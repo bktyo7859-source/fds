@@ -96,7 +96,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               Interactive Territory Map
             </h2>
             <p className="text-sm text-charcoal-muted max-w-xl mt-2 font-light">
-              Explore property valuations mapped across verified prime urban and coastal coordinates. Click any pin to inspect specifications.
+              Explore property valuations mapped across regional enclave reference nodes. Click any pin to inspect tabular record specifications and ML estimates.
+            </p>
+            <p className="text-[11px] text-charcoal-light max-w-xl mt-1 font-mono">
+              Note: <code className="bg-white/80 px-1 py-0.5 rounded border border-[#E7E7E7]">Housing.csv</code> records are tabular; pins represent curated regional demonstration enclaves.
             </p>
           </div>
 
@@ -189,11 +192,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div className="flex items-center space-x-2 mb-2">
               <span className="w-2.5 h-2.5 rounded-full bg-champagne animate-pulse" />
               <span className="text-xs font-semibold text-charcoal">
-                {filtered.length} Indexed Enclave Properties
+                {filtered.length} Regional Demonstration Enclaves
               </span>
             </div>
             <p className="text-[11px] text-charcoal-muted leading-relaxed">
-              Spatial markers sync with Kaggle housing records, verified dimensions, and market tiers.
+              Spatial pins represent illustrative regional reference anchors; tabular specifications are sourced directly from <code className="font-mono text-[10px]">Housing.csv</code>.
             </p>
           </div>
         </div>
