@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import HERO_VIDEO_PATH, CINEMATIC_HERO_PATH, SCROLL_VIDEO_PATH, IMAGES_DIR
+from .config import HERO_VIDEO_PATH, CINEMATIC_HERO_PATH, SCROLL_VIDEO_PATH, IMAGES_DIR, PROJECT_ROOT
 from .model import engine
 from .properties import property_store
 from .media import media_metadata, verify_fingerprints
@@ -157,6 +157,20 @@ def stream_cinematic_video(request: Request):
 def stream_scroll_video(request: Request):
     """Stream preserved scroll-down drone house tour video with full Range seeking support."""
     return range_requests_response(request, SCROLL_VIDEO_PATH)
+
+
+@app.get("/videos/{video_filename:path}")
+def stream_named_video(request: Request, video_filename: str):
+    """Stream named video file from frontend/public/videos or project root with Range request support."""
+    import urllib.parse
+    clean_name = urllib.parse.unquote(video_filename)
+    public_path = os.path.join(PROJECT_ROOT, "frontend", "public", "videos", clean_name)
+    if os.path.exists(public_path):
+        return range_requests_response(request, public_path)
+    root_path = os.path.join(PROJECT_ROOT, clean_name)
+    if os.path.exists(root_path):
+        return range_requests_response(request, root_path)
+    raise HTTPException(status_code=404, detail=f"Video file '{video_filename}' not found")
 
 
 # Property Exploration Endpoints
