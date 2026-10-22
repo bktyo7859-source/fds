@@ -20,12 +20,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenV
   }, []);
 
   const navItems = [
-    { id: 'discover', label: 'Discover', icon: Compass },
-    { id: 'scrollytelling', label: 'Tour', icon: Building2 },
-    { id: 'properties', label: 'Properties', icon: Building2 },
-    { id: 'map', label: 'Spatial Map', icon: MapPin },
+    { id: 'discover', label: 'Cinematic Reel', icon: Compass },
+    { id: 'highlights', label: 'Highlights', icon: Sparkles },
+    { id: 'map', label: 'Google Maps', icon: MapPin },
+    { id: 'properties', label: 'Featured Estates', icon: Building2 },
     { id: 'valuation', label: 'Valuation Studio', icon: Sparkles },
-    { id: 'analytics', label: 'Market Intelligence', icon: BarChart3 },
+    { id: 'analytics', label: 'Intelligence', icon: BarChart3 },
   ];
 
   const handleNavClick = (id: string) => {

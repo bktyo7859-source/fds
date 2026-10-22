@@ -2,6 +2,7 @@ export interface Property {
   id: number;
   title: string;
   location: string;
+  summary?: string;
   coordinates: {
     lat: number;
     lng: number;
@@ -10,6 +11,7 @@ export interface Property {
   formatted_price: string;
   formatted_price_millions: string;
   price_per_sqft: number;
+  price_per_area?: number;
   area: number;
   bedrooms: number;
   bathrooms: number;
@@ -22,7 +24,18 @@ export interface Property {
   airconditioning: string;
   prefarea: string;
   furnishingstatus: string;
+  record_type?: string;
+  model_split?: string;
+  geolocation?: {
+    lat: number;
+    lng: number;
+    is_reference_node?: boolean;
+  };
   image: string;
+  image_meta?: {
+    illustrative: boolean;
+    credit: string;
+  };
   features: string[];
   description: string;
 }

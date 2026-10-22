@@ -23,6 +23,10 @@ IMAGES_DIR = (
 
 # Original media — referenced in place, never modified.
 HERO_VIDEO_PATH = os.path.join(PROJECT_ROOT, "landing page.mp4")
+CINEMATIC_HERO_PATH = os.path.join(
+    PROJECT_ROOT,
+    "Shanghai, China's MEGA City _ Breathtaking 8K Night Video by DJI Inspire 3 - (1080p).mp4",
+)
 SCROLL_VIDEO_PATH = os.path.join(
     PROJECT_ROOT,
     "scroll down",

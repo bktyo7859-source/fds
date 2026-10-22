@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { Scrollytelling } from './components/Scrollytelling';
+import { IntroductionHighlights } from './components/IntroductionHighlights';
+import { GoogleMapsSection } from './components/GoogleMapsSection';
 import { PropertyDiscovery } from './components/PropertyDiscovery';
-import { InteractiveMap } from './components/InteractiveMap';
+import { Scrollytelling } from './components/Scrollytelling';
 import { ValuationStudio } from './components/ValuationStudio';
 import { MarketIntelligence } from './components/MarketIntelligence';
+import { CallToAction } from './components/CallToAction';
+import { Footer } from './components/Footer';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { ValuationReportModal } from './components/ValuationReportModal';
-import { Footer } from './components/Footer';
 import { Property, ValuationResult, ValuationRequestPayload } from './types';
 import { getProperties } from './services/api';
+import { FALLBACK_PROPERTIES } from './data/fallbackProperties';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('discover');
-  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [allProperties, setAllProperties] = useState<Property[]>(FALLBACK_PROPERTIES);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [propertyDetailModalOpen, setPropertyDetailModalOpen] = useState<boolean>(false);
   const [valuationPresetProperty, setValuationPresetProperty] = useState<Property | null>(null);
@@ -28,11 +31,17 @@ export function App() {
     location?: string;
   }>({});
 
-  // Fetch initial batch of properties for the interactive map
+  // Fetch initial batch of properties for the interactive map and discovery
   useEffect(() => {
-    getProperties({ limit: 80 })
-      .then((data) => setAllProperties(data.properties))
-      .catch((err) => console.error('Failed to pre-load map properties:', err));
+    getProperties({ limit: 100 })
+      .then((data) => {
+        if (data.properties && data.properties.length > 0) {
+          setAllProperties(data.properties);
+        }
+      })
+      .catch((err) => {
+        console.warn('Using authentic dataset archive fallback properties:', err);
+      });
   }, []);
 
   const handleSelectProperty = (property: Property) => {
@@ -86,45 +95,64 @@ export function App() {
         onOpenValuation={() => scrollTo('valuation')}
       />
 
-      {/* Main Content Layout */}
+      {/* Main Content Layout — Sequenced according to specification */}
       <main>
-        {/* 1. Cinematic Hero with Untouched Landing Page Video */}
+        {/* 1. Full-Screen Cinematic Video Hero (Shanghai 8K Night Reel + Controls) */}
         <Hero
           onExploreProperties={() => scrollTo('properties')}
           onOpenValuation={() => scrollTo('valuation')}
-          onDiscoverScroll={() => scrollTo('scrollytelling')}
+          onDiscoverScroll={() => scrollTo('highlights')}
+          onOpenMap={() => scrollTo('map')}
         />
 
-        {/* 2. Scrollytelling Tour with Preserved Drone House Tour Video */}
-        <Scrollytelling
-          onExploreProperties={() => scrollTo('properties')}
+        {/* 2. Introduction and Key Highlights (4 Core Pillars & Verification) */}
+        <IntroductionHighlights
+          onExploreMap={() => scrollTo('map')}
           onOpenValuation={() => scrollTo('valuation')}
+          onExploreProperties={() => scrollTo('properties')}
         />
 
-        {/* 3. Verified Property Discovery Archive (Housing.csv) */}
-        <PropertyDiscovery
-          onSelectProperty={handleSelectProperty}
-          onOpenMapWithProperty={handleOpenMapWithProperty}
-        />
-
-        {/* 4. Interactive Territorial Map with Geocoded Enclaves */}
-        <InteractiveMap
+        {/* 3. Interactive Google Maps Section (Official JS API v3 + Fallback) */}
+        <GoogleMapsSection
           properties={allProperties}
           selectedProperty={selectedProperty}
           onSelectProperty={handleSelectProperty}
+          onValuateProperty={handleValuateWithProfile}
         />
 
-        {/* 5. Machine Learning Valuation Studio (5 Steps, Live ML Inference) */}
-        <ValuationStudio
-          initialProperty={valuationPresetProperty}
-          onOpenReport={handleOpenReportFromResult}
-        />
+        {/* 4. Featured Locations & Relevant Project Content */}
+        <section id="project-content">
+          {/* 4a. Verified Property Discovery Archive (Housing.csv) */}
+          <PropertyDiscovery
+            onSelectProperty={handleSelectProperty}
+            onOpenMapWithProperty={handleOpenMapWithProperty}
+          />
 
-        {/* 6. Market Intelligence Dashboard & Sensitivity Simulator */}
-        <MarketIntelligence />
+          {/* 4b. Machine Learning Valuation Studio (5 Steps, Live ML Inference) */}
+          <ValuationStudio
+            initialProperty={valuationPresetProperty}
+            onOpenReport={handleOpenReportFromResult}
+          />
+
+          {/* 4c. Scrollytelling Tour with Preserved Drone House Tour Video */}
+          <Scrollytelling
+            onExploreProperties={() => scrollTo('properties')}
+            onOpenValuation={() => scrollTo('valuation')}
+          />
+
+          {/* 4d. Market Intelligence Dashboard & Sensitivity Simulator */}
+          <MarketIntelligence />
+        </section>
+
+        {/* 5. Call-to-Action Section */}
+        <CallToAction
+          onOpenValuation={() => scrollTo('valuation')}
+          onExploreMap={() => scrollTo('map')}
+          onExploreProperties={() => scrollTo('properties')}
+        />
       </main>
 
-      {/* Footer */}
+      {/* 6. Professional Footer */}
       <Footer />
 
       {/* Property Detail Modal */}

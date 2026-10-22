@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import HERO_VIDEO_PATH, SCROLL_VIDEO_PATH, IMAGES_DIR
+from .config import HERO_VIDEO_PATH, CINEMATIC_HERO_PATH, SCROLL_VIDEO_PATH, IMAGES_DIR
 from .model import engine
 from .properties import property_store
 from .media import media_metadata, verify_fingerprints
@@ -145,6 +145,12 @@ def get_media_verification():
 def stream_hero_video(request: Request):
     """Stream preserved landing page hero video with full Range seeking support."""
     return range_requests_response(request, HERO_VIDEO_PATH)
+
+
+@app.get("/videos/cinematic")
+def stream_cinematic_video(request: Request):
+    """Stream user-added 8K cinematic night aerial video with full Range seeking support."""
+    return range_requests_response(request, CINEMATIC_HERO_PATH)
 
 
 @app.get("/videos/scroll")
